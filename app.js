@@ -1,12 +1,12 @@
 //jshint esversion:6
 require('dotenv').config()
-
+var md5 = require('md5');
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
+var md5 = require('md5');
 
-const encrypt= require('mongoose-encryption');
 
 
 const app = express();
@@ -28,7 +28,7 @@ const accountSchema =new mongoose.Schema({
 
 // accountSchema.plugin(encrypt,{secret:secret},encryptedFields:['password']);
 
-accountSchema.plugin(encrypt,{secret:process.env.SECRET ,encryptedFields: ["password"]});
+// accountSchema.plugin(encrypt,{secret:process.env.SECRET ,encryptedFields: ["password"]});
 
 const Account = mongoose.model("Account", accountSchema);
 
@@ -55,7 +55,7 @@ app.post('/login',(req,res)=>{
         {
            if(foundAccount)
            {
-               if(foundAccount.password==req.body.password)
+               if(foundAccount.password==md5(req.body.password))
                {
                 //    console.log(foundAccount.password);
                    console.log("account Matched. Now you are going to Secret Page!");
@@ -99,7 +99,7 @@ app.post('/register',(req,res)=>{
             {
                 const account= new Account({
                     email:req.body.username,
-                    password:req.body.password
+                    password:md5(req.body.password)
                 })
                 console.log("Account has been created. Please login Now!");
                 account.save();
