@@ -5,8 +5,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
-var md5 = require('md5');
 
+const bcrypt= require('bcrypt');
+const saltRounds = 12;
 
 
 const app = express();
@@ -55,17 +56,13 @@ app.post('/login',(req,res)=>{
         {
            if(foundAccount)
            {
-               if(foundAccount.password==md5(req.body.password))
+            bcrypt.compare(req.body.password, foundAccount.password, function(err, result) {
+               if(result===true)
                {
-                //    console.log(foundAccount.password);
-                   console.log("account Matched. Now you are going to Secret Page!");
-                    res.render('secrets');
+                   res.render('secrets');
                }
-               else
-               {
-                console.log("account doesn't Match. Please Login Again!");
-                res.render('login');
-               }
+            });
+               
            }
             
         }
@@ -80,37 +77,33 @@ app.get('/register',(req,res)=>{
 
 app.post('/register',(req,res)=>{
 
-    if(req.body.username==""|| req.body.password=="")
-    {
-         res.redirect("/register");
-    }
-    else 
-    {
-      
-        Account.findOne({email:req.body.username},(err,foundAccount)=>{
-            if(foundAccount)
-            {
-                console.log("This Account is already exists. Please log in ");
+    bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+              if(req.body.username==""|| req.body.password=="")
+             {
+                    res.redirect("/register");
+             }
+
+               else
+             {
+                 const account= new Account({
+                email:req.body.username,
+                password:hash
+              })
+                 console.log("Account has been created. You are now logged in!");
+                 account.save();
+                 res.render('secrets');
+            
+             } 
+                  
                 
-                res.redirect('/login');
-             
-            }
-            else
-            {
-                const account= new Account({
-                    email:req.body.username,
-                    password:md5(req.body.password)
-                })
-                console.log("Account has been created. Please login Now!");
-                account.save();
-                res.redirect('/login');
-                
-            }
-        })
-    }
+            })
+        
+    });
+    
+   
   
     
-});
+
 
 
 
